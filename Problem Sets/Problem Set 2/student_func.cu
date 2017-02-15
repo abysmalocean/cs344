@@ -119,7 +119,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   assert(filterWidth % 2 == 1);
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
-
+  int tid = yIndex * numCols + xIndex;
   #if DEBUGGAUSSIAN
   if(yIndex * numCols + xIndex  == 0 )
   {
@@ -127,8 +127,8 @@ void gaussian_blur(const unsigned char* const inputChannel,
     printf("number of Rows is [%d]\n",numRows);
     printf("number of Colum is [%d]\n",numCols);
     printf("number of filter width is [%d]\n",filterWidth);
-    printf("input channel 0 is [%d]\n",inputChannel[0]);
-    printf("output channel 0 is [%d]\n",outputChannel[0]);
+    printf("input channel [tid] is [%d]\n",tid,inputChannel[tid]);
+    printf("output channel [tid] is [%d]\n",tid,outputChannel[tid]);
   }
   #endif
   float result = 0.f;
