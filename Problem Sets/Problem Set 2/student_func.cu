@@ -117,11 +117,25 @@ void gaussian_blur(const unsigned char* const inputChannel,
   float result = 0.f;
   for (int filter_r = -filterWidth/2; filter_r <= filterWidth/2; ++filter_r) {
     for (int filter_c = -filterWidth/2; filter_c <= filterWidth/2; ++filter_c) {
-      int image_r = std::min(std::max(filter_r, 0), static_cast<int>(numRows - 1));
-          int image_c = std::min(std::max(filter_c, 0), static_cast<int>(numCols - 1));
+      if(filter_c < 0)
+      {
+        filter_c = 0;
+      }
+      if(filter_r < 0 )
+      {
+        filter_r = 0;
+      }
+      if (filter_r >(numRows - 1))
+      {
+        filter_r = numRows - 1;
+      }
+      if (filter_c >(numCols - 1))
+      {
+        filter_c = numCols - 1;
+      }
 
-          float image_value = static_cast<float>(inputChannel[image_r * numCols + image_c]);
-          float filter_value = filter[(filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2];
+      float image_value = static_cast<float>(inputChannel[image_r * numCols + image_c]);
+      float filter_value = filter[(filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2];
 
           result += image_value * filter_value;
         }
