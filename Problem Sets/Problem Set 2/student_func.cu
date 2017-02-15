@@ -106,7 +106,7 @@
 #define DEBUGKERNEL 0
 #define DEBUGFILTER 0
 #define DEBUGGAUSSIAN 1
-#define DEBUGSEP 1
+#define DEBUGSEP 0
 
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
@@ -127,7 +127,8 @@ void gaussian_blur(const unsigned char* const inputChannel,
     printf("number of Rows is [%d]\n",numRows);
     printf("number of Colum is [%d]\n",numCols);
     printf("number of filter width is [%d]\n",filterWidth);
-    printf("input channel 0 is [%u]\n",inputChannel[0]);
+    printf("input channel 0 is [%d]\n",inputChannel[0]);
+    printf("output channel 0 is [%d]\n",outputChannel[0]);
   }
   #endif
   float result = 0.f;
@@ -218,9 +219,9 @@ void separateChannels(const uchar4* const inputImageRGBA,
   }
   int i = yIndex * numCols + xIndex;
   uchar4 rgba = inputImageRGBA[i];
-  redChannel[i]   = rgba.x;
-  greenChannel[i] = rgba.y;
-  blueChannel[i]  = rgba.z;
+  redChannel[i]   = (unsigned char)rgba.x;
+  greenChannel[i] = (unsigned char)rgba.y;
+  blueChannel[i]  = (unsigned char)rgba.z;
 
   #if DEBUGSEP
   __syncthreads();
