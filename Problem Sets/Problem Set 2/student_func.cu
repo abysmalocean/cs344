@@ -286,7 +286,7 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   gaussian_blur<<<gridSize, blockSize>>>(d_redBlurred,
                                          d_redBlurred,
                                          numRows,numCols,
-                                         filter,filterWidth)
+                                         d_filter,filterWidth);
   // Again, call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   // launching your kernel to make sure that you didn't make any mistakes.
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
