@@ -123,7 +123,12 @@ void gaussian_blur(const unsigned char* const inputChannel,
   //assert(filterWidth % 2 == 1);
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+  if(xIndex >= numCols || yIndex >= numCols)
+  {
+    return;
+  }
   int tid = yIndex * numCols + xIndex;
+
   #if DEBUGGAUSSIAN
   if(yIndex * numCols + xIndex  == 0 )
   {
@@ -136,7 +141,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   }
   #endif
 
-  float result = 0.f;
+  float result = 0.0f;
   for (int filter_r = -filterWidth/2; filter_r <= filterWidth/2; ++filter_r) {
     for (int filter_c = -filterWidth/2; filter_c <= filterWidth/2; ++filter_c) {
       int value_row = min(max(yIndex + filter_r, 0), numRows - 1);
@@ -215,9 +220,7 @@ void separateChannels(const uchar4* const inputImageRGBA,
   blueChannel[i]  = (unsigned char)rgba.z;
   greenChannel[i]  = (unsigned char)rgba.y;
   redChannel[i]  = (unsigned char)rgba.x;
-  blueChannel[i]  = (unsigned char)254;
-  greenChannel[i]  = (unsigned char)245;
-  redChannel[i]  = (unsigned char)155;
+
   #if DEBUGSEP
   __syncthreads();
     if(yIndex * numCols + xIndex  == 1000 )
@@ -289,18 +292,21 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
 
   //allocate memory for the three different channels
   //original
-  size_t filtersize = sizeof(float) * filterWidth * filterWidth;
   //printf("filter size is [%d] and size of float is [%d]\n" , filtersize,sizeof(float));
-  checkCudaErrors(cudaMalloc(&d_filter,filtersize));
   //checkCudaErrors(cudaMemset(d_filter,  (float)0, filtersize));
-  checkCudaErrors(cudaMemcpy(d_filter, h_filter, filtersize, cudaMemcpyHostToDevice));
   int numPixels = numRowsImage * numColsImage;
   checkCudaErrors(cudaMalloc(&d_red,   sizeof(*d_red) * numPixels));
   checkCudaErrors(cudaMalloc(&d_green, sizeof(*d_green) * numPixels));
   checkCudaErrors(cudaMalloc(&d_blue,  sizeof(*d_blue) * numPixels));
+
   checkCudaErrors(cudaMemset(d_red,   (unsigned char)0, sizeof(unsigned char) * numPixels));
   checkCudaErrors(cudaMemset(d_green, (unsigned char)0, sizeof(unsigned char) * numPixels));
   checkCudaErrors(cudaMemset(d_blue,  (unsigned char)0, sizeof(unsigned char) * numPixels));
+
+  size_t filtersize = sizeof(float) * filterWidth * filterWidth;
+  checkCudaErrors(cudaMalloc(&d_filter, filtersize));
+  checkCudaErrors(cudaMemcpy(d_filter, h_filter, filtersize, cudaMemcpyHostToDevice));
+
 #if DEBUGSEP
 {
   printf(" size of unsigned char is [%d]\n",sizeof(unsigned char) );
@@ -353,16 +359,12 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA, numRows, numCols, d_blue, d_red, d_green);
   // Call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   // launching your kernel to make sure that you didn't make any mistakes.
-  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   //TODO: Call your convolution kernel here 3 times, once for each color channel.
   gaussian_blur<<<gridSize, blockSize>>>(d_red, d_redBlurred, numRows,numCols, d_filter,filterWidth);
-  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   // Again, call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   gaussian_blur<<<gridSize, blockSize>>>(d_green, d_greenBlurred, numRows,numCols, d_filter,filterWidth);
-cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   // launching your kernel to make sure that you didn't make any mistakes.
   gaussian_blur<<<gridSize, blockSize>>>(d_blue, d_blueBlurred, numRows,numCols, d_filter,filterWidth);
-  cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   // Now we recombine your results. We take care of launching this kernel for you.
   //
   // NOTE: This kernel launch depends on the gridSize and blockSize variables,
