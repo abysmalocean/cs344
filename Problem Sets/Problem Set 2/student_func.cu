@@ -223,6 +223,7 @@ void separateChannels(const uchar4* const inputImageRGBA,
     if(xIndex + yIndex  == 0 )
     {
       printf("liangxu in separateChannels\n");
+      printf("Index of this thread is [%d]\n",i );
       printf("RedChannel is [%d], rgba.x is [%d]\n", redChannel[0],rgba.x);
       printf("greenChannel is [%d], rgba.x is [%d]\n", greenChannel[0],rgba.y);
       printf("blueChannel is [%d], rgba.x is [%d]\n", blueChannel[0],rgba.z);
