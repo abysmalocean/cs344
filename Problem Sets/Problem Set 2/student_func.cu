@@ -105,8 +105,8 @@
 #define DEBUG 0
 #define DEBUGKERNEL 0
 #define DEBUGFILTER 0
-#define DEBUGGAUSSIAN 1
-#define DEBUGSEP 0
+#define DEBUGGAUSSIAN 0
+#define DEBUGSEP 1
 
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
@@ -296,10 +296,15 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
 
   //allocate memory for the three different channels
   //original
-  checkCudaErrors(cudaMalloc(&d_red,   sizeof(unsigned char) * numRowsImage * numColsImage));
-  checkCudaErrors(cudaMalloc(&d_green, sizeof(unsigned char) * numRowsImage * numColsImage));
-  checkCudaErrors(cudaMalloc(&d_blue,  sizeof(unsigned char) * numRowsImage * numColsImage));
-
+  checkCudaErrors(cudaMalloc(&d_red,   sizeof(*d_red) * numRowsImage * numColsImage));
+  checkCudaErrors(cudaMalloc(&d_green, sizeof(*d_green) * numRowsImage * numColsImage));
+  checkCudaErrors(cudaMalloc(&d_blue,  sizeof(*d_blue) * numRowsImage * numColsImage));
+#if DEBUGSEP
+{
+  printf(" size of unsigned char is [%d]\n",sizeof(unsigned char) );
+  printf(" size of *d_red is [%d]\n",sizeof(*d_red) );
+}
+#endif
   //TODO:
   checkCudaErrors(cudaMalloc(&d_filter,sizeof(float) * filterWidth*filterWidth));
   //Allocate memory for the filter on the GPU
