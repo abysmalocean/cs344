@@ -101,6 +101,7 @@
 //****************************************************************************
 
 #include "utils.h"
+#include <stdio.h>
 
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
