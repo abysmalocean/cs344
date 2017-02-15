@@ -103,10 +103,14 @@
 #include "utils.h"
 #include <stdio.h>
 #define DEBUG 0
-#define DEBUGKERNEL 0
+#define DEBUGKERNEL 1
 #define DEBUGFILTER 0
-#define DEBUGGAUSSIAN 1
+#define DEBUGGAUSSIAN 0
 #define DEBUGSEP 0
+
+unsigned char *d_red, *d_green, *d_blue;
+float         *d_filter;
+
 
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
@@ -116,7 +120,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
 {
   // TODO
   //Dealing with an even width filter is trickier
-  assert(filterWidth % 2 == 1);
+  //assert(filterWidth % 2 == 1);
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
   int tid = yIndex * numCols + xIndex;
@@ -131,45 +135,33 @@ void gaussian_blur(const unsigned char* const inputChannel,
     printf("output channel [%d] is [%d]\n",tid,outputChannel[tid]);
   }
   #endif
+
   float result = 0.f;
   for (int filter_r = -filterWidth/2; filter_r <= filterWidth/2; ++filter_r) {
     for (int filter_c = -filterWidth/2; filter_c <= filterWidth/2; ++filter_c) {
-      if(filter_c < 0)
-      {
-        filter_c = 0;
-      }
-      if(filter_r < 0 )
-      {
-        filter_r = 0;
-      }
-      if (filter_r >=(numRows - 1))
-      {
-        filter_r = numRows - 1;
-      }
-      if (filter_c >=(numCols - 1))
-      {
-        filter_c = numCols - 1;
-      }
-
-      float image_value = static_cast<float>(inputChannel[yIndex * numCols + xIndex]);
-      float filter_value = filter[(filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2];
+      int value_row = min(max(yIndex + filter_r, 0), numRows - 1);
+      int value_col = min(max(xIndex + filter_c, 0), numCols - 1);
+      int filterIndex = (filter_r + filterWidth / 2) * filterWidth + (filter_c + filterWidth / 2);
+      float image_value = static_cast<float>(inputChannel[value_row * numCols + value_col]);
+      float filter_value =filter[filterIndex];
       result += image_value * filter_value;
+      //result += image_value * 0.1;
       #if DEBUGKERNEL
-      if(xIndex + yIndex  == 0 )
+      if(tid  == 0  && filterIndex == 20)
       {
         printf("\n ****in the Kerenl**** \n");
         printf("number of image_value is [%.6f]\n",image_value);
         printf("Filter _ r value is [%d]\n", filter_r );
         printf("Filter _ C value is [%d]\n", filter_c );
-        printf("Filter index is [%d]\n",\
-        (filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2 );
-        printf("number of filter_value is [%.6f]\n",filter_value);
-        printf("number of result [%.6f]\n\n",result);
+        printf("Filter index is [%d]\n",filterIndex);
+        printf("number of filter_value is [%f]\n",filter[filterIndex]);
+        printf("number of result [%f]\n\n",result);
       }
       #endif
+
         }
       }
-      __syncthreads();
+
       outputChannel[yIndex * numCols + xIndex] = result;
 
   #if DEBUG
@@ -223,9 +215,9 @@ void separateChannels(const uchar4* const inputImageRGBA,
   blueChannel[i]  = (unsigned char)rgba.z;
   greenChannel[i]  = (unsigned char)rgba.y;
   redChannel[i]  = (unsigned char)rgba.x;
-  blueChannel[i]  = (unsigned char)255;
-  greenChannel[i]  = (unsigned char)255;
-  redChannel[i]  = (unsigned char)255;
+  blueChannel[i]  = (unsigned char)254;
+  greenChannel[i]  = (unsigned char)245;
+  redChannel[i]  = (unsigned char)155;
   #if DEBUGSEP
   __syncthreads();
     if(yIndex * numCols + xIndex  == 1000 )
@@ -290,8 +282,6 @@ void recombineChannels(const unsigned char* const redChannel,
 
 }
 
-unsigned char *d_red, *d_green, *d_blue;
-float         *d_filter;
 
 void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsImage,
                                 const float* const h_filter, const size_t filterWidth)
@@ -299,9 +289,18 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
 
   //allocate memory for the three different channels
   //original
-  checkCudaErrors(cudaMalloc(&d_red,   sizeof(*d_red) * numRowsImage * numColsImage));
-  checkCudaErrors(cudaMalloc(&d_green, sizeof(*d_green) * numRowsImage * numColsImage));
-  checkCudaErrors(cudaMalloc(&d_blue,  sizeof(*d_blue) * numRowsImage * numColsImage));
+  size_t filtersize = sizeof(float) * filterWidth * filterWidth;
+  //printf("filter size is [%d] and size of float is [%d]\n" , filtersize,sizeof(float));
+  checkCudaErrors(cudaMalloc(&d_filter,filtersize));
+  //checkCudaErrors(cudaMemset(d_filter,  (float)0, filtersize));
+  checkCudaErrors(cudaMemcpy(d_filter, h_filter, filtersize, cudaMemcpyHostToDevice));
+  int numPixels = numRowsImage * numColsImage;
+  checkCudaErrors(cudaMalloc(&d_red,   sizeof(*d_red) * numPixels));
+  checkCudaErrors(cudaMalloc(&d_green, sizeof(*d_green) * numPixels));
+  checkCudaErrors(cudaMalloc(&d_blue,  sizeof(*d_blue) * numPixels));
+  checkCudaErrors(cudaMemset(d_red,   (unsigned char)0, sizeof(unsigned char) * numPixels));
+  checkCudaErrors(cudaMemset(d_green, (unsigned char)0, sizeof(unsigned char) * numPixels));
+  checkCudaErrors(cudaMemset(d_blue,  (unsigned char)0, sizeof(unsigned char) * numPixels));
 #if DEBUGSEP
 {
   printf(" size of unsigned char is [%d]\n",sizeof(unsigned char) );
@@ -309,7 +308,7 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
 }
 #endif
   //TODO:
-  checkCudaErrors(cudaMalloc(&d_filter,sizeof(float) * filterWidth*filterWidth));
+
   //Allocate memory for the filter on the GPU
   //Use the pointer d_filter that we have already declared for you
   //You need to allocate memory for the filter with cudaMalloc
@@ -328,7 +327,8 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
     printf("filter[%d] value [%f] \n",i,h_filter[i] );
   }
   #endif
-  checkCudaErrors(cudaMemcpy(d_filter, h_filter, sizeof(float) * filterWidth*filterWidth, cudaMemcpyHostToDevice));
+
+
 
 }
 
@@ -378,5 +378,4 @@ void cleanup() {
   checkCudaErrors(cudaFree(d_red));
   checkCudaErrors(cudaFree(d_green));
   checkCudaErrors(cudaFree(d_blue));
-  checkCudaErrors(cudaFree(d_filter));
 }
