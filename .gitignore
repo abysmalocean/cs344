@@ -22,3 +22,9 @@
 build
 bin
 
+CMakeCache.txt
+CMakeFiles/
+Problem Sets/Problem Set 2/HW2
+Problem Sets/Problem Set 2/HW2_differenceImage.png
+Problem Sets/Problem Set 2/HW2_output.png
+Problem Sets/Problem Set 2/HW2_reference.png
