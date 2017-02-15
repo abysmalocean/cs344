@@ -205,9 +205,10 @@ __global__
 void separateChannels(const uchar4* const inputImageRGBA,
                       int numRows,
                       int numCols,
+                      unsigned char* const blueChannel,
                       unsigned char* const redChannel,
-                      unsigned char* const greenChannel,
-                      unsigned char* const blueChannel)
+                      unsigned char* const greenChannel
+                      )
 {
   // TODO
 
@@ -219,19 +220,19 @@ void separateChannels(const uchar4* const inputImageRGBA,
   }
   int i = yIndex * numCols + xIndex;
   uchar4 rgba = inputImageRGBA[i];
-  redChannel[i]   = (unsigned char)rgba.x;
-  greenChannel[i] = (unsigned char)rgba.y;
   blueChannel[i]  = (unsigned char)rgba.z;
-
+  greenChannel[i]  = (unsigned char)rgba.y;
+  redChannel[i]  = (unsigned char)rgba.x;
+  printf("at i %d: %u %u %u\n", i, redChannel[i], greenChannel[i], blueChannel[i]);
   #if DEBUGSEP
   __syncthreads();
-    if(xIndex + yIndex  == 0 )
+    if(yIndex * numCols + xIndex  == 1000 )
     {
       printf("liangxu in separateChannels\n");
       printf("Index of this thread is [%d]\n",i );
-      printf("RedChannel is [%d], rgba.x is [%d]\n", redChannel[i],rgba.x);
-      printf("greenChannel is [%d], rgba.y is [%d]\n", greenChannel[i],rgba.y);
-      printf("blueChannel is [%d], rgba.z is [%d]\n", blueChannel[i],rgba.z);
+      printf("greenChannel is [%d], rgba.y is [%d]\n", (unsigned char)greenChannel[i],(unsigned char)rgba.y);
+      printf("blueChannel is [%d], rgba.z is [%d]\n", (unsigned char)blueChannel[i],(unsigned char)rgba.z);
+      printf("RedChannel is [%d], rgba.x is [%d]\n", (unsigned char)redChannel[i],(unsigned char)rgba.x);
     }
   #endif
 
@@ -302,7 +303,7 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
 #if DEBUGSEP
 {
   printf(" size of unsigned char is [%d]\n",sizeof(unsigned char) );
-  printf(" size of *d_red is [%d]\n",sizeof(*d_red) );
+  printf(" size of *d_blue is [%d]\n",sizeof(*d_blue) );
 }
 #endif
   //TODO:
@@ -345,15 +346,15 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   const dim3 gridSize((numCols + blockSize.x - 1)/blockSize.x,\
                       (numCols + blockSize.y - 1)/blockSize.y);
 
-  d_redBlurred = d_red ;
-  d_greenBlurred = d_green;
-  d_blueBlurred = d_blue;
+
   //TODO: Launch a kernel for separating the RGBA image into different color channels
-  separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA, numRows, numCols, d_red, d_green, d_blue);
+  separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA, numRows, numCols, d_blue, d_red, d_green);
   // Call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   // launching your kernel to make sure that you didn't make any mistakes.
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-
+  d_redBlurred = d_red ;
+  d_greenBlurred = d_green;
+  d_blueBlurred = d_blue;
   //TODO: Call your convolution kernel here 3 times, once for each color channel.
   gaussian_blur<<<gridSize, blockSize>>>(d_red, d_red, numRows,numCols, d_filter,filterWidth);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
