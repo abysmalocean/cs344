@@ -142,7 +142,14 @@ void separateChannels(const uchar4* const inputImageRGBA,
                       unsigned char* const blueChannel)
 {
   // TODO
-  //
+  int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
+  int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+  int i = xIndex * yIndex;
+  uchar4 rgba = inputImageRGBA[i];
+  redChannel[i]   = rgba.x;
+  greenChannel[i] = rgba.y;
+  blueChannel[i]  = rgba.z;
+
   // NOTE: Be careful not to try to access memory that is outside the bounds of
   // the image. You'll want code that performs the following check before accessing
   // GPU memory:
@@ -230,7 +237,12 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
                       (numCols + blockSize.y - 1)/blockSize.y);
 
   //TODO: Launch a kernel for separating the RGBA image into different color channels
-
+  separateChannels<<<gridSize, blockSize>>>(inputImageRGBA,
+                                            numRows,
+                                            numCols,
+                                            redChannel,
+                                            greenChannel,
+                                            blueChannel)
   // Call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   // launching your kernel to make sure that you didn't make any mistakes.
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
