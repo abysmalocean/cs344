@@ -102,7 +102,9 @@
 
 #include "utils.h"
 #include <stdio.h>
-
+#define DEBUG 1
+#define DEBUGKERNEL 0
+#define DEBUGFILTER 0
 
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
@@ -115,10 +117,16 @@ void gaussian_blur(const unsigned char* const inputChannel,
   assert(filterWidth % 2 == 1);
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+
+  #if DEBUG
   if(xIndex + yIndex  == 0 )
   {
     printf("liangxu is separateChannels\n");
+    printf("number of Rows is [%d]\n",numRows);
+    printf("number of Colum is [%d]\n",numCols);
+    printf("number of filter width is [%d]\n",filterWidth);
   }
+  #endif
   float result = 0.f;
   for (int filter_r = -filterWidth/2; filter_r <= filterWidth/2; ++filter_r) {
     for (int filter_c = -filterWidth/2; filter_c <= filterWidth/2; ++filter_c) {
@@ -130,27 +138,42 @@ void gaussian_blur(const unsigned char* const inputChannel,
       {
         filter_r = 0;
       }
-      if (filter_r >(numRows - 1))
+      if (filter_r >=(numRows - 1))
       {
         filter_r = numRows - 1;
       }
-      if (filter_c >(numCols - 1))
+      if (filter_c >=(numCols - 1))
       {
         filter_c = numCols - 1;
       }
 
       float image_value = static_cast<float>(inputChannel[yIndex * numCols + xIndex]);
       float filter_value = filter[(filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2];
-
-          result += image_value * filter_value;
+      result += image_value * filter_value;
+      #if DEBUGKERNEL
+      if(xIndex + yIndex  == 0 )
+      {
+        printf("\n ****in the Kerenl**** \n");
+        printf("number of image_value is [%.6f]\n",image_value);
+        printf("Filter _ r value is [%d]\n", filter_r );
+        printf("Filter _ C value is [%d]\n", filter_c );
+        printf("Filter index is [%d]\n",\
+        (filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2 );
+        printf("number of filter_value is [%.6f]\n",filter_value);
+        printf("number of result [%.6f]\n\n",result);
+      }
+      #endif
         }
       }
       __syncthreads();
       outputChannel[yIndex * numCols + xIndex] = result;
+
+  #if DEBUG
       if(xIndex + yIndex  == 0 )
       {
         printf("liangxu result is [%d]\n",(int)result);
       }
+  #endif
   // NOTE: Be sure to compute any intermediate results in floating point
   // before storing the final result as unsigned char.
 
@@ -186,11 +209,13 @@ void separateChannels(const uchar4* const inputImageRGBA,
 
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+#if DEBUG
   if(xIndex + yIndex  == 0 )
   {
     printf("liangxu is separateChannels\n");
   }
-  int i = xIndex * numCols + yIndex;
+#endif
+  int i = yIndex * numCols + xIndex;
   uchar4 rgba = inputImageRGBA[i];
   redChannel[i]   = rgba.x;
   greenChannel[i] = rgba.y;
@@ -233,9 +258,19 @@ void recombineChannels(const unsigned char* const redChannel,
   unsigned char blue  = blueChannel[thread_1D_pos];
 
   //Alpha should be 255 for no transparency
+#if DEBUG
+
+  if(thread_2D_pos.x +  thread_2D_pos.y  == 0 )
+  {
+    printf("red is %u\n",red  );
+    printf("green is %u\n",green  );
+    printf("blue is %u\n",blue  );
+  }
+#endif
   uchar4 outputPixel = make_uchar4(red, green, blue, 255);
 
   outputImageRGBA[thread_1D_pos] = outputPixel;
+
 }
 
 unsigned char *d_red, *d_green, *d_blue;
@@ -252,7 +287,7 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
   checkCudaErrors(cudaMalloc(&d_blue,  sizeof(unsigned char) * numRowsImage * numColsImage));
 
   //TODO:
-  checkCudaErrors(cudaMalloc(&d_filter,sizeof(float) * filterWidth * filterWidth));
+  checkCudaErrors(cudaMalloc(&d_filter,sizeof(float) * filterWidth*filterWidth));
   //Allocate memory for the filter on the GPU
   //Use the pointer d_filter that we have already declared for you
   //You need to allocate memory for the filter with cudaMalloc
@@ -264,7 +299,14 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
   //Copy the filter on the host (h_filter) to the memory you just allocated
   //on the GPU.  cudaMemcpy(dst, src, numBytes, cudaMemcpyHostToDevice);
   //Remember to use checkCudaErrors!
-  checkCudaErrors(cudaMemcpy(d_filter, h_filter, sizeof(float) * filterWidth * filterWidth, cudaMemcpyHostToDevice));
+
+  #if DEBUGFILTER
+  {
+    for(int i = 0 ; i < filterWidth*filterWidth; i++)
+    printf("filter[%d] value [%f] \n",i,h_filter[i] );
+  }
+  #endif
+  checkCudaErrors(cudaMemcpy(d_filter, h_filter, sizeof(float) * filterWidth*filterWidth, cudaMemcpyHostToDevice));
 
 }
 
@@ -287,7 +329,6 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   d_redBlurred = d_red ;
   d_greenBlurred = d_green;
   d_blueBlurred = d_blue;
-  printf("Liang XU 1 \n");
   //TODO: Launch a kernel for separating the RGBA image into different color channels
   separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA,
                                             numRows,
@@ -298,7 +339,6 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   // Call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   // launching your kernel to make sure that you didn't make any mistakes.
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  printf("Liang XU 2 \n");
 
   //TODO: Call your convolution kernel here 3 times, once for each color channel.
   gaussian_blur<<<gridSize, blockSize>>>(d_red,
@@ -306,21 +346,18 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
                                          numRows,numCols,
                                          d_filter,filterWidth);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-  printf("Liang XU 3 \n");
   // Again, call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   gaussian_blur<<<gridSize, blockSize>>>(d_green,
                                          d_green,
                                          numRows,numCols,
                                          d_filter,filterWidth);
 cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-printf("Liang XU 4 \n");
   // launching your kernel to make sure that you didn't make any mistakes.
   gaussian_blur<<<gridSize, blockSize>>>(d_blue,
                                          d_blue,
                                          numRows,numCols,
                                          d_filter,filterWidth);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-printf("Liang XU 5 \n");
   // Now we recombine your results. We take care of launching this kernel for you.
   //
   // NOTE: This kernel launch depends on the gridSize and blockSize variables,
@@ -332,7 +369,6 @@ printf("Liang XU 5 \n");
                                              numRows,
                                              numCols);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-printf("Liang XU 6 \n");
 }
 
 
