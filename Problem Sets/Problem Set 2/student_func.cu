@@ -103,7 +103,7 @@
 #include "utils.h"
 #include <stdio.h>
 #define DEBUG 0
-#define DEBUGKERNEL 1
+#define DEBUGKERNEL 0
 #define DEBUGFILTER 0
 #define DEBUGGAUSSIAN 0
 #define DEBUGSEP 0
@@ -209,27 +209,31 @@ void separateChannels(const uchar4* const inputImageRGBA,
 {
   // TODO
 
-  int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
-  int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
-  if(xIndex >= numCols || yIndex >= numCols)
-  {
+  // Compute the thread's row and column
+  int X = blockIdx.x * blockDim.x + threadIdx.x;
+  int Y = blockIdx.y * blockDim.y + threadIdx.y;
+
+  if (X >= numCols || Y >= numRows) {
     return;
   }
-  int i = yIndex * numCols + xIndex;
+
+  // Offset into the 1D images
+  int i = Y * numCols + X;
+
   uchar4 rgba = inputImageRGBA[i];
-  blueChannel[i]  = rgba.z;
-  greenChannel[i]  = rgba.y;
-  redChannel[i]  = rgba.x;
+  redChannel[i] = rgba.x;
+  greenChannel[i] = rgba.y;
+  blueChannel[i] = rgba.z;
 
   #if DEBUGSEP
   __syncthreads();
-    if(yIndex * numCols + xIndex  == 1000 )
+    if(Y * numCols + X  == 1000 )
     {
       printf("liangxu in separateChannels\n");
-      printf("Index of this thread is [%d]\n",i );
-      printf("greenChannel is [%d], rgba.y is [%d]\n", (unsigned char)greenChannel[i],(unsigned char)rgba.y);
-      printf("blueChannel is [%d], rgba.z is [%d]\n", (unsigned char)blueChannel[i],(unsigned char)rgba.z);
-      printf("RedChannel is [%d], rgba.x is [%d]\n", (unsigned char)redChannel[i],(unsigned char)rgba.x);
+      printf("Index of this thread is [%d]\n",offset );
+      printf("greenChannel is [%d], rgba.y is [%d]\n", (unsigned char)greenChannel[offset],(unsigned char)rgba_pixel.y);
+      printf("blueChannel is [%d], rgba.z is [%d]\n", (unsigned char)blueChannel[offset],(unsigned char)rgba_pixel.z);
+      printf("RedChannel is [%d], rgba.x is [%d]\n", (unsigned char)redChannel[offset],(unsigned char)rgba_pixel.x);
     }
   #endif
 
@@ -294,18 +298,18 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
   //original
   //printf("filter size is [%d] and size of float is [%d]\n" , filtersize,sizeof(float));
   //checkCudaErrors(cudaMemset(d_filter,  (float)0, filtersize));
-  int numPixels = numRowsImage * numColsImage;
-  checkCudaErrors(cudaMalloc(&d_red,   sizeof(*d_red) * numPixels));
-  checkCudaErrors(cudaMalloc(&d_green, sizeof(*d_green) * numPixels));
-  checkCudaErrors(cudaMalloc(&d_blue,  sizeof(*d_blue) * numPixels));
+  checkCudaErrors(
+        cudaMalloc(&d_red, sizeof(*d_red) * numRowsImage * numColsImage));
+    checkCudaErrors(
+        cudaMalloc(&d_green, sizeof(*d_green) * numRowsImage * numColsImage));
+    checkCudaErrors(
+        cudaMalloc(&d_blue, sizeof(*d_blue) * numRowsImage * numColsImage));
 
-  checkCudaErrors(cudaMemset(d_red,   (unsigned char)0, sizeof(unsigned char) * numPixels));
-  checkCudaErrors(cudaMemset(d_green, (unsigned char)0, sizeof(unsigned char) * numPixels));
-  checkCudaErrors(cudaMemset(d_blue,  (unsigned char)0, sizeof(unsigned char) * numPixels));
+    size_t filtersize = sizeof(float) * filterWidth * filterWidth;
+    checkCudaErrors(cudaMalloc(&d_filter, filtersize));
 
-  size_t filtersize = sizeof(float) * filterWidth * filterWidth;
-  checkCudaErrors(cudaMalloc(&d_filter, filtersize));
-  checkCudaErrors(cudaMemcpy(d_filter, h_filter, filtersize, cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_filter, h_filter, filtersize,
+                               cudaMemcpyHostToDevice));
 
 #if DEBUGSEP
 {
@@ -380,4 +384,5 @@ void cleanup() {
   checkCudaErrors(cudaFree(d_red));
   checkCudaErrors(cudaFree(d_green));
   checkCudaErrors(cudaFree(d_blue));
+  checkCudaErrors(cudaFree(d_filter));
 }
