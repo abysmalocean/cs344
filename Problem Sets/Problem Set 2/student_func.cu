@@ -223,7 +223,6 @@ void separateChannels(const uchar4* const inputImageRGBA,
   blueChannel[i]  = (unsigned char)rgba.z;
   greenChannel[i]  = (unsigned char)rgba.y;
   redChannel[i]  = (unsigned char)rgba.x;
-  printf("at i %d: %u %u %u\n", i, redChannel[i], greenChannel[i], blueChannel[i]);
   #if DEBUGSEP
   __syncthreads();
     if(yIndex * numCols + xIndex  == 1000 )
