@@ -271,6 +271,9 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   const dim3 gridSize((numCols + blockSize.x - 1)/blockSize.x,\
                       (numCols + blockSize.y - 1)/blockSize.y);
 
+  d_redBlurred = d_red ;
+  d_greenBlurred = d_green;
+  d_blueBlurred = d_blue;
   //TODO: Launch a kernel for separating the RGBA image into different color channels
   separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA,
                                             numRows,
@@ -284,20 +287,20 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
 
   //TODO: Call your convolution kernel here 3 times, once for each color channel.
   gaussian_blur<<<gridSize, blockSize>>>(d_red,
-                                         d_redBlurred,
+                                         d_red,
                                          numRows,numCols,
                                          d_filter,filterWidth);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
 
   // Again, call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   gaussian_blur<<<gridSize, blockSize>>>(d_green,
-                                         d_greenBlurred,
+                                         d_green,
                                          numRows,numCols,
                                          d_filter,filterWidth);
 cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
   // launching your kernel to make sure that you didn't make any mistakes.
   gaussian_blur<<<gridSize, blockSize>>>(d_blue,
-                                         d_blueBlurred,
+                                         d_blue,
                                          numRows,numCols,
                                          d_filter,filterWidth);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
