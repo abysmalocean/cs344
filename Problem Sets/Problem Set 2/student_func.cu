@@ -105,7 +105,7 @@
 
 #define checkCudaErrors(err)  __checkCudaErrors (err, __FILE__, __LINE__)
 
-inline void __checkCudaErrors( CUresult err, const char *file, const int line )
+inline void __checkCudaErrors( cudaError_t err, const char *file, const int line )
 {
     if( CUDA_SUCCESS != err) {
         fprintf(stderr,
