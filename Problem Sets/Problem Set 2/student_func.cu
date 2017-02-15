@@ -127,8 +127,8 @@ void gaussian_blur(const unsigned char* const inputChannel,
     printf("number of Rows is [%d]\n",numRows);
     printf("number of Colum is [%d]\n",numCols);
     printf("number of filter width is [%d]\n",filterWidth);
-    printf("input channel [tid] is [%d]\n",tid,inputChannel[tid]);
-    printf("output channel [tid] is [%d]\n",tid,outputChannel[tid]);
+    printf("input channel [%d] is [%d]\n",tid,inputChannel[tid]);
+    printf("output channel [%d] is [%d]\n",tid,outputChannel[tid]);
   }
   #endif
   float result = 0.f;
