@@ -209,22 +209,33 @@ void separateChannels(const uchar4* const inputImageRGBA,
 {
   // TODO
 
-  // Compute the thread's row and column
-  int X = blockIdx.x * blockDim.x + threadIdx.x;
-  int Y = blockIdx.y * blockDim.y + threadIdx.y;
-
-  if (X >= numCols || Y >= numRows) {
+  // Offset into the 1D images
+  int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
+  int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+  if((X >= numCols) || (Y >= numRows))
+  {
     return;
   }
 
-  // Offset into the 1D images
-  int i = Y * numCols + X;
-
+  int i = yIndex * numCols + xIndex;
   uchar4 rgba = inputImageRGBA[i];
-  redChannel[i] = rgba.x;
-  greenChannel[i] = rgba.y;
-  blueChannel[i] = rgba.z;
+  blueChannel[i]  = (unsigned char)rgba.z;
+  greenChannel[i]  = (unsigned char)rgba.y;
+  redChannel[i]  = (unsigned char)rgba.x;
+/*
+int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
+int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+if(xIndex >= numCols || yIndex >= numCols)
+{
+  return;
+}
+int i = yIndex * numCols + xIndex;
+uchar4 rgba = inputImageRGBA[i];
+blueChannel[i]  = (unsigned char)rgba.z;
+greenChannel[i]  = (unsigned char)rgba.y;
+redChannel[i]  = (unsigned char)rgba.x;
 
+*/
   #if DEBUGSEP
   __syncthreads();
     if(Y * numCols + X  == 1000 )
