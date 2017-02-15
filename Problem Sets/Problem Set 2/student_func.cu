@@ -115,7 +115,10 @@ void gaussian_blur(const unsigned char* const inputChannel,
   assert(filterWidth % 2 == 1);
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
-
+  if(xIndex + yIndex  == 0 )
+  {
+    printf("liangxu is separateChannels\n");
+  }
   float result = 0.f;
   for (int filter_r = -filterWidth/2; filter_r <= filterWidth/2; ++filter_r) {
     for (int filter_c = -filterWidth/2; filter_c <= filterWidth/2; ++filter_c) {
