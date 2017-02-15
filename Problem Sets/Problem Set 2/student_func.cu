@@ -147,7 +147,10 @@ void gaussian_blur(const unsigned char* const inputChannel,
       }
       __syncthreads();
       outputChannel[yIndex * numCols + xIndex] = result;
-
+      if(xIndex + yIndex  == 0 )
+      {
+        printf("liangxu result is [%d]\n",(int)result);
+      }
   // NOTE: Be sure to compute any intermediate results in floating point
   // before storing the final result as unsigned char.
 
