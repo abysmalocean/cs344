@@ -177,9 +177,13 @@ void separateChannels(const uchar4* const inputImageRGBA,
                       unsigned char* const blueChannel)
 {
   // TODO
-  printf("liangxu is separateChannels\n");
+
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+  if(xIndex + yIndex  == 0 )
+  {
+    printf("liangxu is separateChannels\n");
+  }
   int i = xIndex * numCols + yIndex;
   uchar4 rgba = inputImageRGBA[i];
   redChannel[i]   = rgba.x;
