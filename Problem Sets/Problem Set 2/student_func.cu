@@ -308,7 +308,7 @@ printf("Liang XU 4 \n");
                                          numRows,numCols,
                                          d_filter,filterWidth);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-
+printf("Liang XU 5 \n");
   // Now we recombine your results. We take care of launching this kernel for you.
   //
   // NOTE: This kernel launch depends on the gridSize and blockSize variables,
@@ -320,7 +320,7 @@ printf("Liang XU 4 \n");
                                              numRows,
                                              numCols);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-
+printf("Liang XU 6 \n");
 }
 
 
