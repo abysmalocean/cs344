@@ -274,7 +274,7 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   d_redBlurred = d_red ;
   d_greenBlurred = d_green;
   d_blueBlurred = d_blue;
-  pringf("Liang XU\n");
+  printf("Liang XU\n");
   //TODO: Launch a kernel for separating the RGBA image into different color channels
   separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA,
                                             numRows,
