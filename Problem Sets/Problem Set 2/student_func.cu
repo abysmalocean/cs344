@@ -212,7 +212,10 @@ void separateChannels(const uchar4* const inputImageRGBA,
 
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
-
+  if(xIndex >= numCols || yIndex >= numCols)
+  {
+    return;
+  }
   int i = yIndex * numCols + xIndex;
   uchar4 rgba = inputImageRGBA[i];
   redChannel[i]   = rgba.x;
@@ -220,6 +223,7 @@ void separateChannels(const uchar4* const inputImageRGBA,
   blueChannel[i]  = rgba.z;
 
   #if DEBUGSEP
+  __syncthreads();
     if(xIndex + yIndex  == 0 )
     {
       printf("liangxu in separateChannels\n");
