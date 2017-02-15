@@ -217,9 +217,9 @@ void separateChannels(const uchar4* const inputImageRGBA,
   }
   int i = yIndex * numCols + xIndex;
   uchar4 rgba = inputImageRGBA[i];
-  blueChannel[i]  = (unsigned char)rgba.z;
-  greenChannel[i]  = (unsigned char)rgba.y;
-  redChannel[i]  = (unsigned char)rgba.x;
+  blueChannel[i]  = rgba.z;
+  greenChannel[i]  = rgba.y;
+  redChannel[i]  = rgba.x;
 
   #if DEBUGSEP
   __syncthreads();
