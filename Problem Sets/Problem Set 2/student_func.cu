@@ -222,10 +222,10 @@ void separateChannels(const uchar4* const inputImageRGBA,
   #if DEBUGSEP
     if(xIndex + yIndex  == 0 )
     {
-      printf("liangxu is separateChannels\n");
-      printf("RedChannel is [%u]\n", redChannel[0]);
-      printf("greenChannel is [%u]\n", greenChannel[0]);
-      printf("blueChannel is [%u]\n", blueChannel[0]);
+      printf("liangxu in separateChannels\n");
+      printf("RedChannel is [%d], rgba.x is [%d]\n", redChannel[0],rgba.x);
+      printf("greenChannel is [%d], rgba.x is [%d]\n", greenChannel[0],rgba.y);
+      printf("blueChannel is [%d], rgba.x is [%d]\n", blueChannel[0],rgba.z);
     }
   #endif
 
@@ -270,9 +270,9 @@ void recombineChannels(const unsigned char* const redChannel,
 
   if(thread_2D_pos.x +  thread_2D_pos.y  == 0 )
   {
-    printf("red is %u\n",red  );
-    printf("green is %u\n",green  );
-    printf("blue is %u\n",blue  );
+    printf("red is %d\n",red  );
+    printf("green is %d\n",green  );
+    printf("blue is %d\n",blue  );
   }
 #endif
   uchar4 outputPixel = make_uchar4(red, green, blue, 255);
