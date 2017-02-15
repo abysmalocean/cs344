@@ -109,6 +109,24 @@ void gaussian_blur(const unsigned char* const inputChannel,
                    const float* const filter, const int filterWidth)
 {
   // TODO
+  //Dealing with an even width filter is trickier
+  assert(filterWidth % 2 == 1);
+  int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
+  int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
+
+  float result = 0.f;
+  for (int filter_r = -filterWidth/2; filter_r <= filterWidth/2; ++filter_r) {
+    for (int filter_c = -filterWidth/2; filter_c <= filterWidth/2; ++filter_c) {
+      int image_r = std::min(std::max(r + filter_r, 0), static_cast<int>(numRows - 1));
+          int image_c = std::min(std::max(c + filter_c, 0), static_cast<int>(numCols - 1));
+
+          float image_value = static_cast<float>(channel[image_r * numCols + image_c]);
+          float filter_value = filter[(filter_r + filterWidth/2) * filterWidth + filter_c + filterWidth/2];
+
+          result += image_value * filter_value;
+        }
+      }
+      outputChannel[xIndex * numCols + yIndex] = result;
 
   // NOTE: Be sure to compute any intermediate results in floating point
   // before storing the final result as unsigned char.
@@ -144,7 +162,7 @@ void separateChannels(const uchar4* const inputImageRGBA,
   // TODO
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
-  int i = xIndex * yIndex;
+  int i = xIndex * numCols + yIndex;
   uchar4 rgba = inputImageRGBA[i];
   redChannel[i]   = rgba.x;
   greenChannel[i] = rgba.y;
@@ -206,6 +224,7 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
   checkCudaErrors(cudaMalloc(&d_blue,  sizeof(unsigned char) * numRowsImage * numColsImage));
 
   //TODO:
+  checkCudaErrors(cudaMalloc(&d_filter,sizeof(float) * filterWidth * filterWidth));
   //Allocate memory for the filter on the GPU
   //Use the pointer d_filter that we have already declared for you
   //You need to allocate memory for the filter with cudaMalloc
@@ -217,6 +236,7 @@ void allocateMemoryAndCopyToGPU(const size_t numRowsImage, const size_t numColsI
   //Copy the filter on the host (h_filter) to the memory you just allocated
   //on the GPU.  cudaMemcpy(dst, src, numBytes, cudaMemcpyHostToDevice);
   //Remember to use checkCudaErrors!
+  checkCudaErrors(cudaMemcpy(d_filter, h_filter, sizeof(float) * filterWidth * filterWidth, cudaMemcpyHostToDevice));
 
 }
 
