@@ -146,7 +146,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
         }
       }
       __syncthreads();
-      outputChannel[xIndex * numCols + yIndex] = result;
+      outputChannel[yIndex * numCols + xIndex] = result;
 
   // NOTE: Be sure to compute any intermediate results in floating point
   // before storing the final result as unsigned char.
