@@ -105,8 +105,8 @@
 #define DEBUG 0
 #define DEBUGKERNEL 0
 #define DEBUGFILTER 0
-#define DEBUGGAUSSIAN 0
-#define DEBUGSEP 1
+#define DEBUGGAUSSIAN 1
+#define DEBUGSEP 0
 
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
@@ -121,7 +121,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
 
   #if DEBUGGAUSSIAN
-  if(xIndex + yIndex  == 0 )
+  if(yIndex * numCols + xIndex  == 0 )
   {
     printf("\n*****liangxu is gaussian_blur*****\n");
     printf("number of Rows is [%d]\n",numRows);
