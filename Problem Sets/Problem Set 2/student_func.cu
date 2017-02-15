@@ -103,6 +103,18 @@
 #include "utils.h"
 #include <stdio.h>
 
+#define checkCudaErrors(err)  __checkCudaErrors (err, __FILE__, __LINE__)
+
+inline void __checkCudaErrors( CUresult err, const char *file, const int line )
+{
+    if( CUDA_SUCCESS != err) {
+        fprintf(stderr,
+                "CUDA Driver API error = %04d from file <%s>, line %i.\n",
+                err, file, line );
+        exit(-1);
+    }
+}
+
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
                    unsigned char* const outputChannel,
