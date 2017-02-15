@@ -275,7 +275,7 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   d_redBlurred = d_red ;
   d_greenBlurred = d_green;
   d_blueBlurred = d_blue;
-  printf("Liang XU\n");
+  printf("Liang XU 1 \n");
   //TODO: Launch a kernel for separating the RGBA image into different color channels
   separateChannels<<<gridSize, blockSize>>>(d_inputImageRGBA,
                                             numRows,
@@ -286,6 +286,7 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
   // Call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   // launching your kernel to make sure that you didn't make any mistakes.
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+  printf("Liang XU 2 \n");
 
   //TODO: Call your convolution kernel here 3 times, once for each color channel.
   gaussian_blur<<<gridSize, blockSize>>>(d_red,
@@ -293,13 +294,14 @@ void your_gaussian_blur(const uchar4 * const h_inputImageRGBA, uchar4 * const d_
                                          numRows,numCols,
                                          d_filter,filterWidth);
   cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
-
+  printf("Liang XU 3 \n");
   // Again, call cudaDeviceSynchronize(), then call checkCudaErrors() immediately after
   gaussian_blur<<<gridSize, blockSize>>>(d_green,
                                          d_green,
                                          numRows,numCols,
                                          d_filter,filterWidth);
 cudaDeviceSynchronize(); checkCudaErrors(cudaGetLastError());
+printf("Liang XU 4 \n");
   // launching your kernel to make sure that you didn't make any mistakes.
   gaussian_blur<<<gridSize, blockSize>>>(d_blue,
                                          d_blue,
