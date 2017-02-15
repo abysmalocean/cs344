@@ -102,9 +102,11 @@
 
 #include "utils.h"
 #include <stdio.h>
-#define DEBUG 1
+#define DEBUG 0
 #define DEBUGKERNEL 0
 #define DEBUGFILTER 0
+#define DEBUGGAUSSIAN 1
+#define DEBUGSEP 1
 
 __global__
 void gaussian_blur(const unsigned char* const inputChannel,
@@ -118,13 +120,14 @@ void gaussian_blur(const unsigned char* const inputChannel,
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
 
-  #if DEBUG
+  #if DEBUGGAUSSIAN
   if(xIndex + yIndex  == 0 )
   {
-    printf("liangxu is separateChannels\n");
+    printf("\n*****liangxu is gaussian_blur*****\n");
     printf("number of Rows is [%d]\n",numRows);
     printf("number of Colum is [%d]\n",numCols);
     printf("number of filter width is [%d]\n",filterWidth);
+    printf("input channel 0 is [%u]\n",inputChannel[0]);
   }
   #endif
   float result = 0.f;
@@ -209,17 +212,22 @@ void separateChannels(const uchar4* const inputImageRGBA,
 
   int xIndex = blockIdx.x * blockDim.x + threadIdx.x;
   int yIndex = blockIdx.y * blockDim.y + threadIdx.y;
-#if DEBUG
-  if(xIndex + yIndex  == 0 )
-  {
-    printf("liangxu is separateChannels\n");
-  }
-#endif
+
   int i = yIndex * numCols + xIndex;
   uchar4 rgba = inputImageRGBA[i];
   redChannel[i]   = rgba.x;
   greenChannel[i] = rgba.y;
   blueChannel[i]  = rgba.z;
+
+  #if DEBUGSEP
+    if(xIndex + yIndex  == 0 )
+    {
+      printf("liangxu is separateChannels\n");
+      printf("RedChannel is [%u]\n", redChannel[0]);
+      printf("greenChannel is [%u]\n", greenChannel[0]);
+      printf("blueChannel is [%u]\n", blueChannel[0]);
+    }
+  #endif
 
   // NOTE: Be careful not to try to access memory that is outside the bounds of
   // the image. You'll want code that performs the following check before accessing

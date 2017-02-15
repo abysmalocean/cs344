@@ -2,6 +2,9 @@
 #include <cassert>
 // for uchar4 struct
 #include <cuda_runtime.h>
+#define DEBUGREF 1
+
+#include <stdio.h>
 
 void channelConvolution(const unsigned char* const channel,
                         unsigned char* const channelBlurred,
@@ -54,6 +57,17 @@ void referenceCalculation(const uchar4* const rgbaImage, uchar4 *const outputIma
     red[i]   = rgba.x;
     green[i] = rgba.y;
     blue[i]  = rgba.z;
+#if DEBUGREF
+{
+  if(i == 0)
+  {
+    printf("\n\n****Liang Xu in the reference function****\n");
+    printf("red is %d\n",red[0] );
+    printf("green is %d\n",green[0]  );
+    printf("blue is %d\n",blue[0]  );
+  }
+}
+#endif
   }
 
   //Now we can do the convolution for each of the color channels
