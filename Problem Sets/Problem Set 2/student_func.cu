@@ -224,9 +224,9 @@ void separateChannels(const uchar4* const inputImageRGBA,
     {
       printf("liangxu in separateChannels\n");
       printf("Index of this thread is [%d]\n",i );
-      printf("RedChannel is [%d], rgba.x is [%d]\n", redChannel[0],rgba.x);
-      printf("greenChannel is [%d], rgba.x is [%d]\n", greenChannel[0],rgba.y);
-      printf("blueChannel is [%d], rgba.x is [%d]\n", blueChannel[0],rgba.z);
+      printf("RedChannel is [%d], rgba.x is [%d]\n", redChannel[i],rgba.x);
+      printf("greenChannel is [%d], rgba.y is [%d]\n", greenChannel[i],rgba.y);
+      printf("blueChannel is [%d], rgba.z is [%d]\n", blueChannel[i],rgba.z);
     }
   #endif
 
